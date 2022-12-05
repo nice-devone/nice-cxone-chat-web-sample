@@ -1,0 +1,15 @@
+.message-item {
+  max-width: 65%;
+  padding: 10px;
+}
+
+.message-item__inbound {
+  align-self: flex-end;
+}
+
+.message-item .message-item-card {
+  background-color: #e6ffe5;
+}
+.message-item__inbound .message-item-card {
+  background-color: #fff5e3;
+}

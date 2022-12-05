@@ -1,0 +1,40 @@
+.chat-container {
+  display: flex;
+  padding: 6px;
+}
+.chat-window {
+  display: flex;
+  flex: 1 0;
+  flex-direction: column;
+  height: 95vh;
+  padding: 6px 6px 0px 6px;
+}
+.chat-sdk {
+  width: 50%;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.start-livechat {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  padding-right: 40px;
+}
+
+.multithread-back-link {
+  display: inline-flex;
+  vertical-align: text-bottom;
+  box-sizing: inherit;
+  text-align: center;
+  align-items: center;
+}
+
+.multithread-back-link:hover {
+  cursor: pointer;
+}

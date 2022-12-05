@@ -1,0 +1,8 @@
+.send-message-form {
+  display: flex;
+  padding-top: 12px;
+}
+
+.send-message-form-text-input {
+  padding: 6px;
+}

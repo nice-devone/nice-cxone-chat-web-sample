@@ -1,0 +1,15 @@
+.inputHidden {
+  display: none;
+}
+
+.fileUploadLabel:hover {
+  cursor: pointer;
+}
+
+.fileUploadLabel svg {
+  color: #1976d2;
+}
+
+.fileUploadLabel:hover svg {
+  color: #5ad219;
+}

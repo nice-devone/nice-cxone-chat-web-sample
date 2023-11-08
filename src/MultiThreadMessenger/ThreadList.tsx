@@ -1,15 +1,16 @@
 import { ThreadListItem } from './ThreadListItem';
 import {
-  IThread,
+  ThreadView,
   LoadThreadMetadataChatEvent,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import List from '@mui/material/List';
 import { ListItemText } from '@mui/material';
 import MapsUgcIcon from '@mui/icons-material/MapsUgc';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
+import React from 'react';
 
 interface ThreadListProps {
-  threads: Array<IThread>;
+  threads: Array<ThreadView>;
   onThreadSelect: (id: string) => void;
   onThreadArchive: (id: string) => Promise<void>;
   onThreadNameChange: (id: string, name: string) => void;

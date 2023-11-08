@@ -1,20 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
-  ChatSdk,
-  Thread,
-  LivechatThread,
-  Message,
+  AssignedAgentChangedData,
   ChatEvent,
   ChatEventData,
-  AssignedAgentChangedData,
-  isMessageCreatedEvent,
+  ChatSdk,
+  ContactStatus,
+  isAgentTypingEndedEvent,
+  isAgentTypingStartedEvent,
   isContactStatusChangedEvent,
+  isMessageCreatedEvent,
+  LivechatThread,
+  Message,
+  Thread,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 
 import { MessagesBoard } from '../Chat/MessagesBoard/MessagesBoard';
 import { SendMessageForm } from '../Chat/SendMessageForm/SendMessageForm';
-import { User } from '../Chat/User/User';
+import { Customer } from '../Chat/Customer/Customer';
 import { useWindowFocus } from '../hooks/focus';
 import { parseAgentName } from '../Chat/Agent/agentName';
 import { Typography } from '@mui/material';
@@ -23,8 +26,10 @@ import { isLivechat } from './isLivechat';
 import { StartLivechatButton } from './StartLivechatButton';
 import { EndLivechatButton } from './EndLivechatButton';
 import { mergeMessages } from '../state/messages/mergeMessages';
+import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
+import { AgentTyping } from '../Chat/Agent/AgentTyping';
 
-interface LiveChatwindowProps {
+interface LiveChatWindowProps {
   sdk: ChatSdk;
   thread: Thread | LivechatThread;
 }
@@ -38,21 +43,24 @@ enum LivechatStatus {
 export const LivechatWindow = ({
   sdk,
   thread,
-}: LiveChatwindowProps): JSX.Element => {
+}: LiveChatWindowProps): JSX.Element => {
   const [messages, setMessages] = useState<Map<string, Message>>(new Map());
-  const [userName, setUserName] = useState<string>(
-    localStorage.getItem('userName') ?? '',
+  const [customerName, setCustomerName] = useState<string>(
+    localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '',
   );
   const [disabled, setDisabled] = useState<boolean>(false);
   const windowFocus = useWindowFocus();
   const [agentName, setAgentName] = useState<string | null>(null);
+  const [agentTyping, setAgentTyping] = useState<boolean | null>(null);
   const [livechatStatus, setLivechatStatus] = useState<LivechatStatus | null>(
     null,
   );
 
   // Recover thread
   useEffect(() => {
-    sdk.getCustomer()?.setName(localStorage.getItem('userName') ?? '');
+    sdk
+      .getCustomer()
+      ?.setName(localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '');
 
     const recover = async () => {
       try {
@@ -62,7 +70,12 @@ export const LivechatWindow = ({
           recoverResponse.messages.reverse() as Message[];
         setMessages((messages) => mergeMessages(messages, recoveredMessages));
         setAgentName(parseAgentName(recoverResponse.inboxAssignee));
-        handleRecoverThreadStatus(recoverResponse.consumerContact.status);
+        const contact = recoverResponse.contact;
+        if (!contact) {
+          return;
+        }
+
+        handleRecoverThreadStatus(contact.status);
       } catch (error) {
         if (isLivechat(thread)) {
           // if thread does not exist in the system show Livechat button
@@ -86,7 +99,7 @@ export const LivechatWindow = ({
       handleMessageAdded,
     );
     const removeContactStatusChangedListener = sdk.onChatEvent(
-      ChatEvent.CASE_STATUS_CHANGED,
+      ChatEvent.CONTACT_STATUS_CHANGED,
       handleCloseLivechatThread,
     );
     const removeAssignedAgentChangedListener = sdk.onChatEvent(
@@ -94,10 +107,22 @@ export const LivechatWindow = ({
       handleAssignedAgentChangeEvent,
     );
 
+    const removeAgentTypingStartedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_STARTED,
+      handleAgentTypingStartedEvent,
+    );
+
+    const removeAgentTypingEndedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_ENDED,
+      handleAgentTypingEndedEvent,
+    );
+
     return () => {
       removeMessageCreatedEventListener();
       removeContactStatusChangedListener();
       removeAssignedAgentChangedListener();
+      removeAgentTypingStartedListener();
+      removeAgentTypingEndedListener();
     };
   }, []);
 
@@ -131,7 +156,7 @@ export const LivechatWindow = ({
 
       const status = event.detail.data.case.status;
 
-      if (status === 'closed') {
+      if (status === ContactStatus.CLOSED) {
         setLivechatStatus(LivechatStatus.CLOSED);
         setDisabled(true);
       }
@@ -149,15 +174,35 @@ export const LivechatWindow = ({
     },
     [],
   );
+  const handleAgentTypingStartedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      if (isAgentTypingStartedEvent(event.detail)) {
+        setAgentTyping(true);
+      }
+    },
+    [],
+  );
 
-  const handleInputUserNameChanged = useCallback((newUserName: string) => {
-    localStorage.setItem('userName', newUserName);
-    setUserName(newUserName);
-    sdk.getCustomer()?.setName(newUserName);
-  }, []);
+  const handleAgentTypingEndedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      if (isAgentTypingEndedEvent(event.detail)) {
+        setAgentTyping(false);
+      }
+    },
+    [],
+  );
+
+  const handleInputCustomerNameChanged = useCallback(
+    (newCustomerName: string) => {
+      localStorage.setItem(STORAGE_CHAT_CUSTOMER_NAME, newCustomerName);
+      setCustomerName(newCustomerName);
+      sdk.getCustomer()?.setName(newCustomerName);
+    },
+    [],
+  );
 
   const handleRecoverThreadStatus = useCallback((status: string) => {
-    if (status === 'closed') {
+    if (status === ContactStatus.CLOSED) {
       setLivechatStatus(LivechatStatus.CLOSED);
       setDisabled(true);
 
@@ -181,9 +226,22 @@ export const LivechatWindow = ({
     [thread],
   );
 
-  const handleMessageKeyUp = useCallback(() => {
-    thread.keystroke();
-  }, [thread]);
+  let messagePreviewTimeoutId: ReturnType<typeof setTimeout> | undefined =
+    undefined;
+
+  const handleMessageKeyUp = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      thread.keystroke();
+
+      const inputFieldContent = event.currentTarget.value;
+      // defer sending message preview to avoid sending too many requests
+      messagePreviewTimeoutId && clearTimeout(messagePreviewTimeoutId);
+      messagePreviewTimeoutId = setTimeout(() => {
+        thread.sendMessagePreview(inputFieldContent);
+      }, 300);
+    },
+    [thread],
+  );
 
   const handleLoadMoreMessages = useCallback(async () => {
     const loadMoreMessageResponse = await thread.loadMoreMessages();
@@ -219,7 +277,7 @@ export const LivechatWindow = ({
   return (
     <>
       <QueueCounting sdk={sdk} />
-      <User name={userName} onChange={handleInputUserNameChanged} />
+      <Customer name={customerName} onChange={handleInputCustomerNameChanged} />
       <MessagesBoard
         messages={messages}
         loadMoreMessages={handleLoadMoreMessages}
@@ -243,6 +301,7 @@ export const LivechatWindow = ({
           Your chat ended.
         </Typography>
       ) : null}
+      {agentTyping ? <AgentTyping /> : null}
       <SendMessageForm
         onSubmit={handleSendMessage}
         onFileUpload={handleFileUpload}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   ChatSdk,
@@ -9,15 +9,19 @@ import {
   ChatEventData,
   AssignedAgentChangedData,
   isMessageCreatedEvent,
+  isAgentTypingStartedEvent,
+  isAgentTypingEndedEvent,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 
 import { MessagesBoard } from './MessagesBoard/MessagesBoard';
 import { SendMessageForm } from './SendMessageForm/SendMessageForm';
-import { User } from './User/User';
+import { Customer } from './Customer/Customer';
 import { useWindowFocus } from '../hooks/focus';
 import { parseAgentName } from './Agent/agentName';
 import { Typography } from '@mui/material';
 import { mergeMessages } from '../state/messages/mergeMessages';
+import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
+import { AgentTyping } from './Agent/AgentTyping';
 
 interface ChatWindowProps {
   sdk: ChatSdk;
@@ -26,15 +30,18 @@ interface ChatWindowProps {
 
 export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
   const [messages, setMessages] = useState<Map<string, Message>>(new Map());
-  const [userName, setUserName] = useState<string>(
-    localStorage.getItem('userName') ?? '',
+  const [customerName, setCustomerName] = useState<string>(
+    localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '',
   );
   const windowFocus = useWindowFocus();
   const [agentName, setAgentName] = useState<string | null>(null);
+  const [agentTyping, setAgentTyping] = useState<boolean | null>(null);
 
   // Recover thread
   useEffect(() => {
-    sdk.getCustomer()?.setName(localStorage.getItem('userName') ?? '');
+    sdk
+      .getCustomer()
+      ?.setName(localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '');
 
     const recover = async () => {
       try {
@@ -62,9 +69,21 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
       handleAssignedAgentChangeEvent,
     );
 
+    const removeAgentTypingStartedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_STARTED,
+      handleAgentTypingStartedEvent,
+    );
+
+    const removeAgentTypingEndedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_ENDED,
+      handleAgentTypingEndedEvent,
+    );
+
     return () => {
       removeMessageCreatedEventListener();
       removeAssignedAgentChangedListener();
+      removeAgentTypingStartedListener();
+      removeAgentTypingEndedListener();
     };
   }, []);
 
@@ -101,11 +120,32 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
     [],
   );
 
-  const handleInputUserNameChanged = useCallback((newUserName: string) => {
-    localStorage.setItem('userName', newUserName);
-    setUserName(newUserName);
-    sdk.getCustomer()?.setName(newUserName);
-  }, []);
+  const handleAgentTypingStartedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      if (isAgentTypingStartedEvent(event.detail)) {
+        setAgentTyping(true);
+      }
+    },
+    [],
+  );
+
+  const handleAgentTypingEndedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      if (isAgentTypingEndedEvent(event.detail)) {
+        setAgentTyping(false);
+      }
+    },
+    [],
+  );
+
+  const handleInputCustomerNameChanged = useCallback(
+    (newCustomerName: string) => {
+      localStorage.setItem(STORAGE_CHAT_CUSTOMER_NAME, newCustomerName);
+      setCustomerName(newCustomerName);
+      sdk.getCustomer()?.setName(newCustomerName);
+    },
+    [],
+  );
 
   const handleSendMessage = useCallback(
     (messageText: string) => {
@@ -121,9 +161,22 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
     [thread],
   );
 
-  const handleMessageKeyUp = useCallback(() => {
-    thread.keystroke();
-  }, [thread]);
+  let messagePreviewTimeoutId: ReturnType<typeof setTimeout> | undefined =
+    undefined;
+
+  const handleMessageKeyUp = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      thread.keystroke();
+
+      const inputFieldContent = event.currentTarget.value;
+      // defer sending message preview to avoid sending too many requests
+      messagePreviewTimeoutId && clearTimeout(messagePreviewTimeoutId);
+      messagePreviewTimeoutId = setTimeout(() => {
+        thread.sendMessagePreview(inputFieldContent);
+      }, 300);
+    },
+    [thread],
+  );
 
   const handleLoadMoreMessages = useCallback(async () => {
     const loadMoreMessageResponse = await thread.loadMoreMessages();
@@ -140,7 +193,7 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
 
   return (
     <>
-      <User name={userName} onChange={handleInputUserNameChanged} />
+      <Customer name={customerName} onChange={handleInputCustomerNameChanged} />
       <MessagesBoard
         messages={messages}
         loadMoreMessages={handleLoadMoreMessages}
@@ -150,6 +203,7 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
           You are talking with {agentName}
         </Typography>
       )}
+      {agentTyping ? <AgentTyping /> : null}
       <SendMessageForm
         onSubmit={handleSendMessage}
         onFileUpload={handleFileUpload}

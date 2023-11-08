@@ -4,9 +4,9 @@ import { ChatWindow } from '../Chat/ChatWindow';
 import '../Chat/Chat.css';
 import { useEffect, useState } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
-import { STORAGE_CHAT_CUSTOMER_ID } from '../Chat/User/constants';
-
-const STORAGE_CHAT_THREAD_ID = 'STORAGE_CHAT_THREAD_ID';
+import { STORAGE_CHAT_CUSTOMER_ID } from '../constants';
+import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
+import { Alert } from '@mui/material';
 
 const isDebugEnabled = Number(process.env.REACT_APP_DEBUG_TOOLS_ENABLED);
 
@@ -20,23 +20,27 @@ export const Messenger = ({ sdk }: MessengerProps): JSX.Element => {
   // try to load saved customer id and thread id
   useEffect(() => {
     const loadThread = async () => {
-      let threadId = localStorage.getItem(STORAGE_CHAT_THREAD_ID);
+      let threadId = localStorage.getItem(getThreadIdStorageKey(sdk.channelId));
 
       try {
-        const authResponse = await sdk.authorize();
-        const customerId = authResponse?.consumerIdentity.idOnExternalPlatform;
-        localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
+        await sdk.authorize();
+        const customerId = sdk.getCustomer()?.getId();
+        if (customerId) {
+          localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
+        }
       } catch (error) {
         console.error(error);
       }
 
       if (!threadId) {
-        threadId = `thread${Math.floor(Math.random() * 10000)}`;
+        threadId = crypto?.randomUUID();
       }
-      const loadedThread = await sdk.getThread(threadId);
+
+      const loadedThread = sdk.getThread(threadId);
       setThread(loadedThread);
-      localStorage.setItem(STORAGE_CHAT_THREAD_ID, threadId);
+      localStorage.setItem(getThreadIdStorageKey(sdk.channelId), threadId);
     };
+
     loadThread();
   }, []);
 
@@ -49,15 +53,20 @@ export const Messenger = ({ sdk }: MessengerProps): JSX.Element => {
   }
 
   return (
-    <div className="chat-container">
-      <div className="chat-window">
-        <ChatWindow sdk={sdk} thread={thread} />
-      </div>
-      {isDebugEnabled ? (
-        <div className="chat-sdk">
-          <SDKControl sdk={sdk} thread={thread} />
+    <div>
+      <Alert icon={false} severity="success">
+        Messenger
+      </Alert>
+      <div className="chat-container">
+        <div className="chat-window">
+          <ChatWindow sdk={sdk} thread={thread} />
         </div>
-      ) : null}
+        {isDebugEnabled ? (
+          <div className="chat-sdk">
+            <SDKControl sdk={sdk} thread={thread} />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

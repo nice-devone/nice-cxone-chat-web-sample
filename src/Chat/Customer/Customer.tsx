@@ -12,12 +12,12 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 
-interface UserProps {
+interface CustomerProps {
   onChange: (name: string) => void;
   name?: string;
 }
 
-export const User = ({ name, onChange }: UserProps) => {
+export const Customer = ({ name, onChange }: CustomerProps) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const handleDialogOpenClick = useCallback(() => {

@@ -7,6 +7,10 @@
   align-self: flex-end;
 }
 
+.message-item__outbound {
+  align-self: flex-start;
+}
+
 .message-item .message-item-card {
   background-color: #e6ffe5;
 }

@@ -1,6 +1,6 @@
 import {
   ChatSdk,
-  IThread,
+  ThreadView,
   LoadThreadMetadataChatEvent,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import '../Chat/Chat.css';
@@ -10,23 +10,22 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { ThreadList } from './ThreadList';
 import { Messenger } from '../Messenger/Messenger';
 import { Link } from '@mui/material';
+import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
 
 interface MultiThreadMessengerProps {
   sdk: ChatSdk;
 }
 
-const STORAGE_CHAT_THREAD_ID = 'STORAGE_CHAT_THREAD_ID';
-
 export const MultiThreadMessenger = ({
   sdk,
 }: MultiThreadMessengerProps): JSX.Element => {
-  const [threadList, setThreadList] = useState<Array<IThread> | null>(null);
+  const [threadList, setThreadList] = useState<Array<ThreadView> | null>(null);
   const [selectedThread, selectThread] = useState<string | null>(null);
 
   const handleLoadThreadList = () => {
     const loadThreadList = async () => {
       try {
-        const threads = await sdk.getTheadList();
+        const threads = await sdk.getThreadList();
         setThreadList(threads ?? []);
       } catch (error: unknown) {
         console.error(error);
@@ -36,7 +35,10 @@ export const MultiThreadMessenger = ({
   };
 
   const handleThreadSelect = (idOnExternalPlatform: string) => {
-    localStorage.setItem(STORAGE_CHAT_THREAD_ID, idOnExternalPlatform);
+    localStorage.setItem(
+      getThreadIdStorageKey(sdk.channelId),
+      idOnExternalPlatform,
+    );
     selectThread(idOnExternalPlatform);
   };
 
@@ -63,7 +65,7 @@ export const MultiThreadMessenger = ({
   };
 
   const handleBackClick = () => {
-    localStorage.setItem(STORAGE_CHAT_THREAD_ID, '');
+    localStorage.setItem(getThreadIdStorageKey(sdk.channelId), '');
     selectThread(null);
     handleLoadThreadList();
   };
@@ -72,7 +74,7 @@ export const MultiThreadMessenger = ({
     idOnExternalPlatform: string,
     name: string,
   ) => {
-    const thread = await sdk.getThread(idOnExternalPlatform);
+    const thread = sdk.getThread(idOnExternalPlatform);
     if (thread) {
       const result = await thread.setName(name);
 

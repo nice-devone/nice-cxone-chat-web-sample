@@ -1,7 +1,7 @@
 import {
   ChatSdk,
   ChatEvent,
-  isSetPositionInQueuePayload,
+  isSetPositionInQueueEvent,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { useState, useEffect } from 'react';
 
@@ -16,7 +16,7 @@ export function QueueCounting({ sdk }: QueueCountingProps): JSX.Element | null {
     const removeListenerCallback = sdk.onChatEvent(
       ChatEvent.SET_POSITION_IN_QUEUE,
       (event) => {
-        if (isSetPositionInQueuePayload(event.detail)) {
+        if (isSetPositionInQueueEvent(event.detail)) {
           setQueuePosition(event.detail.data.positionInQueue);
         }
       },

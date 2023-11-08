@@ -6,18 +6,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { LivechatWindow } from './LivechatWindow';
 import { Alert } from '@mui/material';
 
-import { STORAGE_CHAT_CUSTOMER_ID } from '../Chat/User/constants';
+import { STORAGE_CHAT_CUSTOMER_ID } from '../constants';
 import { isLivechat } from './isLivechat';
-
-const STORAGE_CHAT_THREAD_ID = 'STORAGE_CHAT_THREAD_ID';
-
-function getThreadIdStorageKey(channelId: string) {
-  if (channelId === undefined) {
-    throw new Error('ChannelId must be provided');
-  }
-
-  return `${STORAGE_CHAT_THREAD_ID}_${channelId}`;
-}
+import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
 
 const isDebugEnabled = Number(process.env.REACT_APP_DEBUG_TOOLS_ENABLED);
 
@@ -34,17 +25,20 @@ export const Livechat = ({ sdk }: LivechatProps): JSX.Element => {
       let threadId = localStorage.getItem(getThreadIdStorageKey(sdk.channelId));
 
       try {
-        const authResponse = await sdk.authorize();
-        const customerId = authResponse?.consumerIdentity.idOnExternalPlatform;
-        localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
+        await sdk.authorize();
+        const customerId = sdk.getCustomer()?.getId();
+        if (customerId) {
+          localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
+        }
       } catch (error) {
         console.error(error);
       }
 
       if (!threadId) {
-        threadId = `thread${Math.floor(Math.random() * 10000)}`;
+        threadId = crypto?.randomUUID();
       }
-      const loadedThread = await sdk.getThread(threadId);
+      const loadedThread = sdk.getThread(threadId);
+
       if (isLivechat(loadedThread)) {
         setThread(loadedThread);
         localStorage.setItem(getThreadIdStorageKey(sdk.channelId), threadId);

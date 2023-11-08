@@ -1,6 +1,6 @@
 import {
   ChatSdk,
-  CustomerIdentity,
+  CustomerIdentityIdOnExternalPlatform,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { useCallback, useState } from 'react';
 
@@ -10,13 +10,20 @@ interface AuthorizeProps {
 
 export const Authorize = ({ sdk }: AuthorizeProps): JSX.Element => {
   const [authorized, setAuthorized] = useState(false);
-  const [customerIdentity, setCustomerIdentity] =
-    useState<CustomerIdentity | null>(null);
+  const [
+    customerIdentityOnExternalPlatform,
+    setCustomerIdentityOnExternalPlatform,
+  ] = useState<CustomerIdentityIdOnExternalPlatform | null>(null);
 
   const onAuthorizeClick = useCallback(async () => {
     try {
-      const authResponse = await sdk.authorize();
-      setCustomerIdentity(authResponse.consumerIdentity);
+      await sdk.authorize();
+
+      const customerId = sdk.getCustomer()?.getId();
+      if (customerId) {
+        setCustomerIdentityOnExternalPlatform(customerId);
+      }
+
       setAuthorized(true);
     } catch (error) {
       setAuthorized(false);
@@ -30,7 +37,7 @@ export const Authorize = ({ sdk }: AuthorizeProps): JSX.Element => {
       <button onClick={onAuthorizeClick}>{'Authorize'}</button>
       {' - '}
       {authorized ? 'Authorized' : 'Not Authorized'}
-      <div>CustomerIdentity: {customerIdentity?.idOnExternalPlatform}</div>
+      <div>CustomerIdentity: {customerIdentityOnExternalPlatform}</div>
     </div>
   );
 };

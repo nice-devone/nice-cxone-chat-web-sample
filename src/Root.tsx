@@ -2,7 +2,7 @@ import ChatSdk, { EnvironmentName } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { Livechat } from './Livechat/Livechat';
 import { Messenger } from './Messenger/Messenger';
 import { MultiThreadMessenger } from './MultiThreadMessenger/MultiThreadMessenger';
-import { STORAGE_CHAT_CUSTOMER_ID } from './Chat/User/constants';
+import { STORAGE_CHAT_CUSTOMER_ID } from './constants';
 
 enum AppVariant {
   LIVECHAT = 'LIVECHAT',

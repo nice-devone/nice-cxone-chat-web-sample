@@ -2,7 +2,12 @@ import ChatSdk, { EnvironmentName } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { Livechat } from './Livechat/Livechat';
 import { Messenger } from './Messenger/Messenger';
 import { MultiThreadMessenger } from './MultiThreadMessenger/MultiThreadMessenger';
-import { STORAGE_CHAT_CUSTOMER_ID } from './constants';
+import {
+  STORAGE_CHAT_AUTHORIZATION_CODE,
+  STORAGE_CHAT_CUSTOMER_ID,
+} from './constants';
+import { FC, useCallback, useState } from 'react';
+import { Login } from './Login/Login';
 
 enum AppVariant {
   LIVECHAT = 'LIVECHAT',
@@ -23,7 +28,9 @@ const sdk = new ChatSdk({
   },
 });
 
-export const Root = (): JSX.Element | null => {
+const isOauthEnabled = Number(process.env.REACT_APP_OAUTH_ENABLED) === 1;
+
+const App: FC = () => {
   switch (process.env.REACT_APP_VARIANT) {
     case AppVariant.LIVECHAT:
       return <Livechat sdk={sdk} />;
@@ -37,4 +44,23 @@ export const Root = (): JSX.Element | null => {
     default:
       return <p>It looks like you need to set the REACT_APP_VARIANT</p>;
   }
+};
+
+export const Root: FC = () => {
+  const [authorizationCode, setAuthorizationCode] = useState(
+    localStorage.getItem(STORAGE_CHAT_AUTHORIZATION_CODE),
+  );
+
+  const handleLogin = useCallback((code: string) => {
+    localStorage.clear(); // This should NOT be done in production. Resets the session for the new login (new customer).
+    localStorage.setItem(STORAGE_CHAT_AUTHORIZATION_CODE, code); // Save the code for later use in sdk.authorize()
+    setAuthorizationCode(code);
+  }, []);
+
+  // Show login screen if needed, otherwise continue to the app
+  return isOauthEnabled && !authorizationCode ? (
+    <Login onLogin={handleLogin} />
+  ) : (
+    <App />
+  );
 };

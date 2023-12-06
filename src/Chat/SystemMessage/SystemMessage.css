@@ -1,0 +1,8 @@
+.system-message {
+    align-self: stretch;
+    text-align: center;
+}
+
+.system-message-content {
+    color: #cacaca;
+}

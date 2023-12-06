@@ -9,9 +9,10 @@ import {
 import './MessageItem.css';
 import {
   Attachment,
-  Message,
   getAuthor,
+  Message,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
+import { FC } from 'react';
 
 interface MessageAttachmentsProps {
   attachments: Array<Attachment> | undefined;
@@ -39,6 +40,7 @@ const MessageAttachments = ({ attachments }: MessageAttachmentsProps) => {
     </ImageList>
   );
 };
+
 interface MessageTextProps {
   text: string;
 }
@@ -54,7 +56,8 @@ const MessageText = ({ text }: MessageTextProps) => {
 interface MessageItemProps {
   message: Message;
 }
-export const MessageItem = ({ message }: MessageItemProps): JSX.Element => {
+
+export const MessageItem: FC<MessageItemProps> = ({ message }) => {
   return (
     <div
       className={`message-item ${

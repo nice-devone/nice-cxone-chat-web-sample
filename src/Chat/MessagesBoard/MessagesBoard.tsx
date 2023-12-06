@@ -1,18 +1,19 @@
-import { Message } from '@nice-devone/nice-cxone-chat-web-sdk';
-import { useMemo } from 'react';
+import { isMessage, Message } from '@nice-devone/nice-cxone-chat-web-sdk';
+import { FC, useMemo } from 'react';
 import { MessageItem } from '../MessageItem/MessageItem';
 import { LoadMoreMessagesTrigger } from './LoadMoreMessagesTrigger/LoadMoreMessagesTrigger';
+import { SystemMessage } from '../SystemMessage/SystemMessage';
 import './MessagesBoard.css';
 
 interface MessagesBoardProps {
-  messages: Map<string, Message>;
+  messages: Map<string, Message | SystemMessage>;
   loadMoreMessages: () => void;
 }
 
-export const MessagesBoard = ({
+export const MessagesBoard: FC<MessagesBoardProps> = ({
   messages,
   loadMoreMessages,
-}: MessagesBoardProps): JSX.Element => {
+}) => {
   const messageArray = useMemo(
     () => Array.from(messages.values()),
     [messages.size],
@@ -21,9 +22,15 @@ export const MessagesBoard = ({
   return (
     <div className="messages-board">
       <LoadMoreMessagesTrigger onTrigger={loadMoreMessages} />
-      {messageArray.map((message) => (
-        <MessageItem message={message} key={message.id} />
-      ))}
+      {messageArray
+        .map((message) =>
+          isMessage(message) ? (
+            <MessageItem message={message} key={message.id} />
+          ) : (
+            <SystemMessage message={message} key={message.id} />
+          ),
+        )
+        .filter(Boolean)}
     </div>
   );
 };

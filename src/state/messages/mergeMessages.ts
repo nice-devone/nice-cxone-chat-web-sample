@@ -1,13 +1,12 @@
-import { Message } from '@nice-devone/nice-cxone-chat-web-sdk';
+interface WithId {
+  id: string;
+}
 
-export function mergeMessages(
-  originalMessages: Map<string, Message>,
-  newMessages: Array<Message>,
-): Map<string, Message> {
-  return [...newMessages, ...Array.from(originalMessages.values())].reduce(
-    (acc, message) => {
-      return acc.set(message.id, message);
-    },
-    new Map<string, Message>(),
-  );
+export function mergeMessages<T extends WithId>(
+  original: Map<string, T>,
+  next: Array<T>,
+): Map<string, T> {
+  return [...next, ...Array.from(original.values())].reduce((acc, current) => {
+    return acc.set(current.id, current);
+  }, new Map<string, T>());
 }

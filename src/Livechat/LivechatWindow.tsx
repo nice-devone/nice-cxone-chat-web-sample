@@ -1,17 +1,19 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 
 import {
   AssignedAgentChangedData,
+  AssignedAgentChangedEvent,
   ChatEvent,
   ChatEventData,
   ChatSdk,
   ContactStatus,
+  ContactToRoutingQueueAssignmentChangedChatEvent,
   isAgentTypingEndedEvent,
   isAgentTypingStartedEvent,
   isContactStatusChangedEvent,
   isMessageCreatedEvent,
   LivechatThread,
-  Message,
+  Message as ContentMessage,
   Thread,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 
@@ -28,6 +30,9 @@ import { EndLivechatButton } from './EndLivechatButton';
 import { mergeMessages } from '../state/messages/mergeMessages';
 import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
 import { AgentTyping } from '../Chat/Agent/AgentTyping';
+import { SystemMessage } from '../Chat/SystemMessage/SystemMessage';
+
+type Message = ContentMessage | SystemMessage;
 
 interface LiveChatWindowProps {
   sdk: ChatSdk;
@@ -40,10 +45,7 @@ enum LivechatStatus {
   CLOSED = 'closed',
 }
 
-export const LivechatWindow = ({
-  sdk,
-  thread,
-}: LiveChatWindowProps): JSX.Element => {
+export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
   const [messages, setMessages] = useState<Map<string, Message>>(new Map());
   const [customerName, setCustomerName] = useState<string>(
     localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '',
@@ -107,6 +109,11 @@ export const LivechatWindow = ({
       handleAssignedAgentChangeEvent,
     );
 
+    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
+      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
+      handleRoutingQueueAssignmentChangedEvent,
+    );
+
     const removeAgentTypingStartedListener = sdk.onChatEvent(
       ChatEvent.AGENT_TYPING_STARTED,
       handleAgentTypingStartedEvent,
@@ -121,6 +128,7 @@ export const LivechatWindow = ({
       removeMessageCreatedEventListener();
       removeContactStatusChangedListener();
       removeAssignedAgentChangedListener();
+      removeRoutingQueueAssignmentChangedListener();
       removeAgentTypingStartedListener();
       removeAgentTypingEndedListener();
     };
@@ -171,9 +179,32 @@ export const LivechatWindow = ({
           (event.detail.data as AssignedAgentChangedData).inboxAssignee,
         ),
       );
+
+      const systemMessage = event.detail as AssignedAgentChangedEvent;
+      setMessages(
+        (messages) =>
+          new Map<string, Message>(
+            messages.set(systemMessage.id, systemMessage),
+          ),
+      );
     },
     [],
   );
+
+  const handleRoutingQueueAssignmentChangedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      const systemMessage =
+        event.detail as ContactToRoutingQueueAssignmentChangedChatEvent;
+      setMessages(
+        (messages) =>
+          new Map<string, Message>(
+            messages.set(systemMessage.id, systemMessage),
+          ),
+      );
+    },
+    [],
+  );
+
   const handleAgentTypingStartedEvent = useCallback(
     (event: CustomEvent<ChatEventData>) => {
       if (isAgentTypingStartedEvent(event.detail)) {

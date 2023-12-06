@@ -4,7 +4,10 @@ import { ChatWindow } from '../Chat/ChatWindow';
 import '../Chat/Chat.css';
 import { useEffect, useState } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
-import { STORAGE_CHAT_CUSTOMER_ID } from '../constants';
+import {
+  STORAGE_CHAT_AUTHORIZATION_CODE,
+  STORAGE_CHAT_CUSTOMER_ID,
+} from '../constants';
 import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
 import { Alert } from '@mui/material';
 
@@ -21,15 +24,19 @@ export const Messenger = ({ sdk }: MessengerProps): JSX.Element => {
   useEffect(() => {
     const loadThread = async () => {
       let threadId = localStorage.getItem(getThreadIdStorageKey(sdk.channelId));
+      const authorizationCode =
+        localStorage.getItem(STORAGE_CHAT_AUTHORIZATION_CODE) ?? undefined;
 
       try {
-        await sdk.authorize();
+        await sdk.authorize(authorizationCode);
         const customerId = sdk.getCustomer()?.getId();
         if (customerId) {
           localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
         }
       } catch (error) {
+        localStorage.removeItem(STORAGE_CHAT_AUTHORIZATION_CODE);
         console.error(error);
+        alert('Authorization failed. Please refresh.');
       }
 
       if (!threadId) {

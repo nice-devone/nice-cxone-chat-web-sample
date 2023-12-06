@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 
 import {
-  ChatSdk,
-  Thread,
-  LivechatThread,
-  Message,
+  AssignedAgentChangedData,
+  AssignedAgentChangedEvent,
   ChatEvent,
   ChatEventData,
-  AssignedAgentChangedData,
-  isMessageCreatedEvent,
-  isAgentTypingStartedEvent,
+  ChatSdk,
+  ContactToRoutingQueueAssignmentChangedChatEvent,
   isAgentTypingEndedEvent,
+  isAgentTypingStartedEvent,
+  isMessageCreatedEvent,
+  LivechatThread,
+  Message as ContentMessage,
+  Thread,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 
 import { MessagesBoard } from './MessagesBoard/MessagesBoard';
@@ -22,13 +24,16 @@ import { Typography } from '@mui/material';
 import { mergeMessages } from '../state/messages/mergeMessages';
 import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
 import { AgentTyping } from './Agent/AgentTyping';
+import { SystemMessage } from './SystemMessage/SystemMessage';
+
+type Message = ContentMessage | SystemMessage;
 
 interface ChatWindowProps {
   sdk: ChatSdk;
   thread: Thread | LivechatThread;
 }
 
-export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
+export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
   const [messages, setMessages] = useState<Map<string, Message>>(new Map());
   const [customerName, setCustomerName] = useState<string>(
     localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '',
@@ -69,6 +74,11 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
       handleAssignedAgentChangeEvent,
     );
 
+    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
+      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
+      handleRoutingQueueAssignmentChangedEvent,
+    );
+
     const removeAgentTypingStartedListener = sdk.onChatEvent(
       ChatEvent.AGENT_TYPING_STARTED,
       handleAgentTypingStartedEvent,
@@ -82,6 +92,7 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
     return () => {
       removeMessageCreatedEventListener();
       removeAssignedAgentChangedListener();
+      removeRoutingQueueAssignmentChangedListener();
       removeAgentTypingStartedListener();
       removeAgentTypingEndedListener();
     };
@@ -115,6 +126,27 @@ export const ChatWindow = ({ sdk, thread }: ChatWindowProps): JSX.Element => {
         parseAgentName(
           (event.detail.data as AssignedAgentChangedData).inboxAssignee,
         ),
+      );
+      const systemMessage = event.detail as AssignedAgentChangedEvent;
+      setMessages(
+        (messages) =>
+          new Map<string, Message>(
+            messages.set(systemMessage.id, systemMessage),
+          ),
+      );
+    },
+    [],
+  );
+
+  const handleRoutingQueueAssignmentChangedEvent = useCallback(
+    (event: CustomEvent<ChatEventData>) => {
+      const systemMessage =
+        event.detail as ContactToRoutingQueueAssignmentChangedChatEvent;
+      setMessages(
+        (messages) =>
+          new Map<string, Message>(
+            messages.set(systemMessage.id, systemMessage),
+          ),
       );
     },
     [],

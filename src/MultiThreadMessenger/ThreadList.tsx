@@ -7,7 +7,6 @@ import List from '@mui/material/List';
 import { ListItemText } from '@mui/material';
 import MapsUgcIcon from '@mui/icons-material/MapsUgc';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
-import React from 'react';
 
 interface ThreadListProps {
   threads: Array<ThreadView>;
@@ -31,7 +30,7 @@ export function ThreadList({
       <ListItemText primary="List of available threads" />
       <ThreadListItem
         name="Start new thread"
-        id=""
+        id={crypto.randomUUID()}
         onThreadSelect={onThreadSelect}
         onThreadArchive={onThreadArchive}
         icon={MapsUgcIcon}

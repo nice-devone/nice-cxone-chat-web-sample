@@ -2,29 +2,45 @@ import {
   ChatSdk,
   ThreadView,
   LoadThreadMetadataChatEvent,
+  SecureSessions,
+  ChatSDKOptions,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import '../Chat/Chat.css';
-import { useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import BackIcon from '@mui/icons-material/ArrowBack';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ThreadList } from './ThreadList';
-import { Messenger } from '../Messenger/Messenger';
 import { Link } from '@mui/material';
-import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
+import { getThreadIdStorageKey } from '../Chat/utils/getThreadIdStorageKey';
+import { STORAGE_CHAT_CUSTOMER_ID } from '../constants';
+import { MessengerWindow } from '../Messenger/MessengerWindow';
 
-interface MultiThreadMessengerProps {
-  sdk: ChatSdk;
-}
+// Initialize Chat SDK with required options
+const chatSdkOptions: ChatSDKOptions = {
+  brandId: Number(import.meta.env.REACT_APP_BRAND_ID as string),
+  channelId: import.meta.env.REACT_APP_CHANNEL_ID as string,
+  customerId: localStorage.getItem(STORAGE_CHAT_CUSTOMER_ID) || '',
+  // use your environment from  EnvironmentName enum
+  environment: import.meta.env.REACT_APP_ENVIRONMENT,
+  isLivechat: true,
+  securedSession: SecureSessions.ANONYMOUS,
+  cacheStorage: null,
+  onError: (error) => {
+    console.error('Chat SDK error:', error);
+  },
+  appName: 'Nice Chat SDK Demo',
+};
 
-export const MultiThreadMessenger = ({
-  sdk,
-}: MultiThreadMessengerProps): JSX.Element => {
+export const MultiThreadMessenger: FC = () => {
   const [threadList, setThreadList] = useState<Array<ThreadView> | null>(null);
-  const [selectedThread, selectThread] = useState<string | null>(null);
+  const [selectedThreadId, selectThreadId] = useState<string | null>(null);
+  const sdkRef = useRef<ChatSdk>(new ChatSdk(chatSdkOptions));
+  const sdk = sdkRef.current;
 
   const handleLoadThreadList = () => {
     const loadThreadList = async () => {
       try {
+        sdk.connect();
         const threads = await sdk.getThreadList();
         setThreadList(threads ?? []);
       } catch (error: unknown) {
@@ -39,7 +55,7 @@ export const MultiThreadMessenger = ({
       getThreadIdStorageKey(sdk.channelId),
       idOnExternalPlatform,
     );
-    selectThread(idOnExternalPlatform);
+    selectThreadId(idOnExternalPlatform);
   };
 
   const handleThreadArchive = async (idOnExternalPlatform: string) => {
@@ -66,7 +82,7 @@ export const MultiThreadMessenger = ({
 
   const handleBackClick = () => {
     localStorage.setItem(getThreadIdStorageKey(sdk.channelId), '');
-    selectThread(null);
+    selectThreadId(null);
     handleLoadThreadList();
   };
 
@@ -99,7 +115,7 @@ export const MultiThreadMessenger = ({
     );
   }
 
-  if (selectedThread !== null) {
+  if (selectedThreadId !== null) {
     return (
       <div>
         <div>
@@ -108,7 +124,7 @@ export const MultiThreadMessenger = ({
           </Link>
         </div>
 
-        <Messenger sdk={sdk} />
+        <MessengerWindow sdk={sdk} threadId={selectedThreadId} />
       </div>
     );
   }

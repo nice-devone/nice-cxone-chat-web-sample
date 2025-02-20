@@ -4,9 +4,13 @@ import './FileUpload.css';
 
 interface FileUploadProps {
   onFileUpload: (files: FileList) => void;
+  disabled: boolean;
 }
 
-export const FileUpload = ({ onFileUpload }: FileUploadProps): JSX.Element => {
+export const FileUpload = ({
+  onFileUpload,
+  disabled = false,
+}: FileUploadProps): JSX.Element => {
   const dragEvents = {
     onDrop: (event: DragEvent<HTMLElement>) => {
       event.stopPropagation();
@@ -31,8 +35,13 @@ export const FileUpload = ({ onFileUpload }: FileUploadProps): JSX.Element => {
         className="inputHidden"
         id="file-upload"
         type="file"
+        disabled={disabled}
       />
-      <label {...dragEvents} htmlFor="file-upload" className="fileUploadLabel">
+      <label
+        {...dragEvents}
+        htmlFor="file-upload"
+        className={`fileUploadLabel ${disabled ? 'disabled' : ''}`}
+      >
         <CloudUploadIcon fontSize="large" />
       </label>
     </>

@@ -59,7 +59,9 @@ export const SendMessageForm = ({
         focused
         autoFocus
         InputProps={{
-          endAdornment: <FileUpload onFileUpload={onFileUpload} />,
+          endAdornment: (
+            <FileUpload onFileUpload={onFileUpload} disabled={disabled} />
+          ),
           onKeyUp: handleKeyUp,
         }}
       />

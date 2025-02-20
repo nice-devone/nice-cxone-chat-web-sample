@@ -4,15 +4,18 @@ import { MessageItem } from '../MessageItem/MessageItem';
 import { LoadMoreMessagesTrigger } from './LoadMoreMessagesTrigger/LoadMoreMessagesTrigger';
 import { SystemMessage } from '../SystemMessage/SystemMessage';
 import './MessagesBoard.css';
+import { Postback } from '../MessageRichContent/MessageRichContent.tsx';
 
 interface MessagesBoardProps {
   messages: Map<string, Message | SystemMessage>;
   loadMoreMessages: () => void;
+  onPostback: (postback: Postback) => void;
 }
 
 export const MessagesBoard: FC<MessagesBoardProps> = ({
   messages,
   loadMoreMessages,
+  onPostback,
 }) => {
   const messageArray = useMemo(
     () => Array.from(messages.values()),
@@ -25,7 +28,11 @@ export const MessagesBoard: FC<MessagesBoardProps> = ({
       {messageArray
         .map((message) =>
           isMessage(message) ? (
-            <MessageItem message={message} key={message.id} />
+            <MessageItem
+              message={message}
+              key={message.id}
+              onAction={onPostback}
+            />
           ) : (
             <SystemMessage message={message} key={message.id} />
           ),

@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AssignedAgentChangedData,
@@ -25,6 +25,7 @@ import { mergeMessages } from '../state/messages/mergeMessages';
 import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
 import { AgentTyping } from './Agent/AgentTyping';
 import { SystemMessage } from './SystemMessage/SystemMessage';
+import { Postback } from './MessageRichContent/MessageRichContent.tsx';
 
 type Message = ContentMessage | SystemMessage;
 
@@ -61,7 +62,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
     };
 
     recover();
-  }, [thread]);
+  }, [sdk, thread]);
 
   // Attach ChatEvent listeners
   useEffect(() => {
@@ -100,7 +101,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
 
   // Mark all messages as read on focus
   useEffect(() => {
-    if (windowFocus) {
+    if (windowFocus && messages.size > 0) {
       thread.lastMessageSeen().catch((error) => console.error(error));
     }
   }, [thread, messages, windowFocus]);
@@ -193,8 +194,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
     [thread],
   );
 
-  let messagePreviewTimeoutId: ReturnType<typeof setTimeout> | undefined =
-    undefined;
+  const messagePreviewTimeoutId = useRef<ReturnType<typeof setTimeout>>();
 
   const handleMessageKeyUp = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -202,8 +202,10 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
 
       const inputFieldContent = event.currentTarget.value;
       // defer sending message preview to avoid sending too many requests
-      messagePreviewTimeoutId && clearTimeout(messagePreviewTimeoutId);
-      messagePreviewTimeoutId = setTimeout(() => {
+      if (messagePreviewTimeoutId.current) {
+        clearTimeout(messagePreviewTimeoutId.current);
+      }
+      messagePreviewTimeoutId.current = setTimeout(() => {
         thread.sendMessagePreview(inputFieldContent);
       }, 300);
     },
@@ -223,12 +225,21 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
     setMessages((messages) => mergeMessages(messages, loadedMessages));
   }, [thread]);
 
+  const handlePostback = useCallback(
+    async (postback: Postback) => {
+      const { text, postback: postbackValue } = postback;
+      await thread.sendPostbackMessage(postbackValue, text);
+    },
+    [thread],
+  );
+
   return (
     <>
       <Customer name={customerName} onChange={handleInputCustomerNameChanged} />
       <MessagesBoard
         messages={messages}
         loadMoreMessages={handleLoadMoreMessages}
+        onPostback={handlePostback}
       />
       {agentName === null ? null : (
         <Typography variant="subtitle2" gutterBottom>

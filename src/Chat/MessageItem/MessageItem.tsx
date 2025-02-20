@@ -1,63 +1,20 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  ImageList,
-  ImageListItem,
-  Typography,
-} from '@mui/material';
+import { Card, CardContent, CardHeader } from '@mui/material';
 import './MessageItem.css';
-import {
-  Attachment,
-  getAuthor,
-  Message,
-} from '@nice-devone/nice-cxone-chat-web-sdk';
+import { getAuthor, Message } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { FC } from 'react';
-
-interface MessageAttachmentsProps {
-  attachments: Array<Attachment> | undefined;
-}
-
-const MessageAttachments = ({ attachments }: MessageAttachmentsProps) => {
-  if (!attachments?.length) {
-    return null;
-  }
-
-  const attachmentImages: Array<Attachment> = [];
-  attachments.forEach((attachmentItem) => {
-    if (attachmentItem.mimeType.includes('image')) {
-      attachmentImages.push(attachmentItem);
-    }
-  });
-
-  return (
-    <ImageList cols={attachmentImages.length}>
-      {attachmentImages.map((item: Attachment) => (
-        <ImageListItem key={item.id}>
-          <img src={item.previewUrl} alt={item.friendlyName} loading="lazy" />
-        </ImageListItem>
-      ))}
-    </ImageList>
-  );
-};
-
-interface MessageTextProps {
-  text: string;
-}
-
-const MessageText = ({ text }: MessageTextProps) => {
-  if (!text.length) {
-    return null;
-  }
-
-  return <Typography variant="body1">{text}</Typography>;
-};
+import { MessageAttachments } from './MessageAttachments.tsx';
+import { MessageText } from './MessageText.tsx';
+import {
+  MessageRichContent,
+  Postback,
+} from '../MessageRichContent/MessageRichContent.tsx';
 
 interface MessageItemProps {
   message: Message;
+  onAction: (postback: Postback) => void;
 }
 
-export const MessageItem: FC<MessageItemProps> = ({ message }) => {
+export const MessageItem: FC<MessageItemProps> = ({ message, onAction }) => {
   return (
     <div
       className={`message-item ${
@@ -74,6 +31,7 @@ export const MessageItem: FC<MessageItemProps> = ({ message }) => {
         <CardContent>
           <MessageAttachments attachments={message.attachments} />
           <MessageText text={message.messageContent.payload.text} />
+          <MessageRichContent message={message} onAction={onAction} />
         </CardContent>
         <CardHeader
           subheader={new Date(message.createdAt).toLocaleString()}

@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AssignedAgentChangedData,
@@ -31,6 +31,7 @@ import { mergeMessages } from '../state/messages/mergeMessages';
 import { STORAGE_CHAT_CUSTOMER_NAME } from '../constants';
 import { AgentTyping } from '../Chat/Agent/AgentTyping';
 import { SystemMessage } from '../Chat/SystemMessage/SystemMessage';
+import { Postback } from '../Chat/MessageRichContent/MessageRichContent.tsx';
 
 type Message = ContentMessage | SystemMessage;
 
@@ -50,7 +51,7 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
   const [customerName, setCustomerName] = useState<string>(
     localStorage.getItem(STORAGE_CHAT_CUSTOMER_NAME) ?? '',
   );
-  const [disabled, setDisabled] = useState<boolean>(false);
+  const [disabled, setDisabled] = useState<boolean>(true);
   const windowFocus = useWindowFocus();
   const [agentName, setAgentName] = useState<string | null>(null);
   const [agentTyping, setAgentTyping] = useState<boolean | null>(null);
@@ -257,8 +258,7 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     [thread],
   );
 
-  let messagePreviewTimeoutId: ReturnType<typeof setTimeout> | undefined =
-    undefined;
+  const messagePreviewTimeoutId = useRef<ReturnType<typeof setTimeout>>();
 
   const handleMessageKeyUp = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -266,8 +266,10 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
 
       const inputFieldContent = event.currentTarget.value;
       // defer sending message preview to avoid sending too many requests
-      messagePreviewTimeoutId && clearTimeout(messagePreviewTimeoutId);
-      messagePreviewTimeoutId = setTimeout(() => {
+      if (messagePreviewTimeoutId.current) {
+        clearTimeout(messagePreviewTimeoutId.current);
+      }
+      messagePreviewTimeoutId.current = setTimeout(() => {
         thread.sendMessagePreview(inputFieldContent);
       }, 300);
     },
@@ -305,6 +307,14 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     }
   }, [thread]);
 
+  const handlePostback = useCallback(
+    async (postback: Postback) => {
+      const { text, postback: postbackValue } = postback;
+      await thread.sendPostbackMessage(postbackValue, text);
+    },
+    [thread],
+  );
+
   return (
     <>
       <QueueCounting sdk={sdk} />
@@ -312,6 +322,7 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
       <MessagesBoard
         messages={messages}
         loadMoreMessages={handleLoadMoreMessages}
+        onPostback={handlePostback}
       />
       {agentName === null ? null : (
         <Typography variant="subtitle2" gutterBottom>

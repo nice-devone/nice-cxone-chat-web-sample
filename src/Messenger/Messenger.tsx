@@ -1,34 +1,45 @@
-import { ChatSdk, Thread } from '@nice-devone/nice-cxone-chat-web-sdk';
-import SDKControl from '../SDKControls/SDKControl';
-import { ChatWindow } from '../Chat/ChatWindow';
+import {
+  ChatSdk,
+  ChatSDKOptions,
+  SecureSessions,
+} from '@nice-devone/nice-cxone-chat-web-sdk';
 import '../Chat/Chat.css';
-import { useEffect, useState } from 'react';
-import CircularProgress from '@mui/material/CircularProgress';
+import { FC, useEffect, useRef } from 'react';
 import {
   STORAGE_CHAT_AUTHORIZATION_CODE,
   STORAGE_CHAT_CUSTOMER_ID,
 } from '../constants';
-import { getThreadIdStorageKey } from '../Chat/utils/getThredIdStorageKey';
-import { Alert } from '@mui/material';
+import { getThreadIdStorageKey } from '../Chat/utils/getThreadIdStorageKey';
+import { MessengerWindow } from './MessengerWindow';
 
-const isDebugEnabled = Number(process.env.REACT_APP_DEBUG_TOOLS_ENABLED);
+// Initialize Chat SDK with required options
+const chatSdkOptions: ChatSDKOptions = {
+  brandId: Number(import.meta.env.REACT_APP_BRAND_ID as string),
+  channelId: import.meta.env.REACT_APP_CHANNEL_ID as string,
+  customerId: localStorage.getItem(STORAGE_CHAT_CUSTOMER_ID) || '',
+  // use your environment from  EnvironmentName enum
+  environment: import.meta.env.REACT_APP_ENVIRONMENT,
+  isLivechat: false,
+  securedSession: SecureSessions.ANONYMOUS,
+  cacheStorage: null,
+  onError: (error) => {
+    console.error('Chat SDK error:', error);
+  },
+  appName: 'Nice Chat SDK Demo',
+};
 
-interface MessengerProps {
-  sdk: ChatSdk;
-}
-
-export const Messenger = ({ sdk }: MessengerProps): JSX.Element => {
-  const [thread, setThread] = useState<Thread | null>(null);
+export const Messenger: FC = () => {
+  const sdkRef = useRef<ChatSdk>(new ChatSdk(chatSdkOptions));
+  const sdk = sdkRef.current;
+  const threadId =
+    localStorage.getItem(getThreadIdStorageKey(sdk.channelId)) ??
+    crypto?.randomUUID();
 
   // try to load saved customer id and thread id
   useEffect(() => {
     const loadThread = async () => {
-      let threadId = localStorage.getItem(getThreadIdStorageKey(sdk.channelId));
-      const authorizationCode =
-        localStorage.getItem(STORAGE_CHAT_AUTHORIZATION_CODE) ?? undefined;
-
       try {
-        await sdk.authorize(authorizationCode);
+        await sdk.connect();
         const customerId = sdk.getCustomer()?.getId();
         if (customerId) {
           localStorage.setItem(STORAGE_CHAT_CUSTOMER_ID, customerId || '');
@@ -39,41 +50,11 @@ export const Messenger = ({ sdk }: MessengerProps): JSX.Element => {
         alert('Authorization failed. Please refresh.');
       }
 
-      if (!threadId) {
-        threadId = crypto?.randomUUID();
-      }
-
-      const loadedThread = sdk.getThread(threadId);
-      setThread(loadedThread);
       localStorage.setItem(getThreadIdStorageKey(sdk.channelId), threadId);
     };
 
     loadThread();
-  }, []);
+  }, [sdk, threadId]);
 
-  if (!thread) {
-    return (
-      <div className="loader">
-        <CircularProgress />
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <Alert icon={false} severity="success">
-        Messenger
-      </Alert>
-      <div className="chat-container">
-        <div className="chat-window">
-          <ChatWindow sdk={sdk} thread={thread} />
-        </div>
-        {isDebugEnabled ? (
-          <div className="chat-sdk">
-            <SDKControl sdk={sdk} thread={thread} />
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
+  return <MessengerWindow sdk={sdk} threadId={threadId} />;
 };

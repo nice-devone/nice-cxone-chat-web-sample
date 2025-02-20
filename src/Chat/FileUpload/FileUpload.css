@@ -13,3 +13,7 @@
 .fileUploadLabel:hover svg {
   color: #5ad219;
 }
+
+.fileUploadLabel.disabled svg {
+  color: #ccc;
+}

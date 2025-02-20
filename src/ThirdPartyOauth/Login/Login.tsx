@@ -18,18 +18,19 @@ export const Login: FC<LoginProps> = ({ onLogin }) => {
     }
   }, [onLogin, code]);
 
+  const providerUrl = import.meta.env.REACT_APP_OAUTH_PROVIDER_URL;
   // Redirect to OAuth provider
   const onLoginClick = useCallback(() => {
-    const providerUrl = process.env.REACT_APP_OAUTH_PROVIDER_URL;
     const clientId = encodeURIComponent(
-      process.env.REACT_APP_OAUTH_CLIENT_ID as string,
+      import.meta.env.REACT_APP_OAUTH_CLIENT_ID as string,
     );
     const redirectUri = encodeURIComponent(
-      process.env.REACT_APP_OAUTH_REDIRECT_URI as string,
+      (import.meta.env.REACT_APP_OAUTH_REDIRECT_URI as string) ??
+        window.location.href,
     );
 
     window.location.href = `${providerUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&grant_type=authorization_code&response_type=code`;
-  }, [onLogin]);
+  }, []);
 
   return (
     <div className="login-dialog">
@@ -37,12 +38,21 @@ export const Login: FC<LoginProps> = ({ onLogin }) => {
       <p className="login-text">
         The oAuth authentication is currently enabled and you need to log in
         first.
-        <br />
-        The button below will redirect you to the configured oAuth provider:
-        <br />
-        <small>{process.env.REACT_APP_OAUTH_PROVIDER_URL}</small>
       </p>
-      <button className="login-btn" onClick={onLoginClick}>
+      {providerUrl ? (
+        <p>
+          The button below will redirect you to the configured oAuth provider:
+          <br />
+          <small>{providerUrl}</small>
+        </p>
+      ) : (
+        <p className="login-error">The oAuth provider URL is not configured.</p>
+      )}
+      <button
+        className="login-btn"
+        onClick={onLoginClick}
+        disabled={!providerUrl}
+      >
         {'Log in'}
       </button>
     </div>

@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { useCallback, useRef, useState } from 'react';
+import { FC, useCallback, useRef, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 
 interface CustomerProps {
@@ -17,20 +17,19 @@ interface CustomerProps {
   name?: string;
 }
 
-export const Customer = ({ name, onChange }: CustomerProps) => {
+export const Customer: FC<CustomerProps> = ({ name, onChange }) => {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const handleDialogOpenClick = useCallback(() => {
     setDialogOpen(true);
   }, []);
 
+  const handleOnClose = useCallback(() => setDialogOpen(false), []);
   const handleSubmit = useCallback(() => {
     const newName = nameInputRef.current?.value;
     onChange(newName ?? '');
     handleOnClose();
-  }, []);
-
-  const handleOnClose = useCallback(() => setDialogOpen(false), []);
+  }, [handleOnClose, onChange]);
 
   return (
     <>

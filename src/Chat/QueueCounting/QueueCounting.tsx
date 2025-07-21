@@ -34,7 +34,7 @@ export function QueueCounting({ sdk }: QueueCountingProps): JSX.Element | null {
   }
 
   return (
-    <div>
+    <div data-testid="queue-counting">
       {`All our agents dedicated to your queue are currently busy.
       There are ${queuePosition} people ahead of you in the queue.`}
     </div>

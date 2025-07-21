@@ -1,4 +1,4 @@
-import { KeyboardEventHandler } from 'react';
+import { FC, KeyboardEventHandler } from 'react';
 import { IconButton } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import SendIcon from '@mui/icons-material/Send';
@@ -13,12 +13,12 @@ interface SendMessageFormProps {
   disabled: boolean;
 }
 
-export const SendMessageForm = ({
+export const SendMessageForm: FC<SendMessageFormProps> = ({
   disabled,
   onFileUpload,
   onKeyUp,
   onSubmit,
-}: SendMessageFormProps): JSX.Element => {
+}) => {
   const textFieldRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = useCallback(() => {
@@ -49,6 +49,7 @@ export const SendMessageForm = ({
   return (
     <div className="send-message-form">
       <TextField
+        data-testid="send-message-form-text-input"
         className="send-message-form-text-input"
         disabled={disabled}
         inputRef={textFieldRef}

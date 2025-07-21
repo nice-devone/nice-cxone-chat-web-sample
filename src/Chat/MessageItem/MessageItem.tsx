@@ -23,7 +23,11 @@ export const MessageItem: FC<MessageItemProps> = ({ message, onAction }) => {
           : 'message-item__inbound'
       }`}
     >
-      <Card className="message-item-card">
+      <Card
+        className="message-item-card"
+        data-testid="message-item"
+        data-id={message.id}
+      >
         <CardHeader
           subheader={getAuthor(message)}
           subheaderTypographyProps={{ fontSize: '12px' }}

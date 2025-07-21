@@ -12,6 +12,15 @@ const chatSdkOptions: ChatSDKOptions = {
   channelId: import.meta.env.REACT_APP_CHANNEL_ID as string,
   // use your environment from EnvironmentName enum
   environment: import.meta.env.REACT_APP_ENVIRONMENT,
+  customEnvironment:
+    import.meta.env.REACT_APP_ENVIRONMENT === 'custom'
+      ? {
+          authorize: import.meta.env.REACT_APP_CUSTOM_ENVIRONMENT_AUTHORIZE,
+          chat: import.meta.env.REACT_APP_CUSTOM_ENVIRONMENT_CHAT,
+          gateway: import.meta.env.REACT_APP_CUSTOM_ENVIRONMENT_GATEWAY,
+          name: import.meta.env.REACT_APP_CUSTOM_ENVIRONMENT_NAME,
+        }
+      : undefined,
   isLivechat: true,
   securedSession: SecureSessions.THIRD_PARTY,
   cacheStorage: null,

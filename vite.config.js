@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react-swc';
 const prefixes = ['REACT_APP'];
 
 export default defineConfig({
+  base: './',
   build: {
     outDir: 'build',
   },

@@ -25,38 +25,51 @@ export const Customer: FC<CustomerProps> = ({ name, onChange }) => {
   }, []);
 
   const handleOnClose = useCallback(() => setDialogOpen(false), []);
-  const handleSubmit = useCallback(() => {
-    const newName = nameInputRef.current?.value;
-    onChange(newName ?? '');
-    handleOnClose();
-  }, [handleOnClose, onChange]);
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      const newName = nameInputRef.current?.value;
+      onChange(newName ?? '');
+      handleOnClose();
+    },
+    [handleOnClose, onChange],
+  );
 
   return (
     <>
-      <Dialog open={dialogOpen} onClose={handleOnClose}>
-        <DialogTitle>Set your name</DialogTitle>
-        <DialogContent>
-          <InputLabel htmlFor="input-with-icon-adornment">Your name</InputLabel>
-          <TextField
-            inputRef={nameInputRef}
-            defaultValue={name}
-            autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircleIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <IconButton onClick={handleSubmit}>
-            <SendIcon color="primary" />
-          </IconButton>
-        </DialogContent>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleOnClose}
+        data-testid="customer-dialog"
+      >
+        <form onSubmit={handleSubmit}>
+          <DialogTitle>Set your name</DialogTitle>
+          <DialogContent>
+            <InputLabel htmlFor="input-with-icon-adornment">
+              Your name
+            </InputLabel>
+            <TextField
+              inputRef={nameInputRef}
+              defaultValue={name}
+              data-testid="customer-name-input"
+              autoFocus
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AccountCircleIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <IconButton type="submit">
+              <SendIcon color="primary" />
+            </IconButton>
+          </DialogContent>
+        </form>
       </Dialog>
-      <IconButton onClick={handleDialogOpenClick}>
+      <IconButton onClick={handleDialogOpenClick} data-testid="customer-button">
         <AccountCircleIcon />
-        <Typography padding={1} fontSize={14}>
+        <Typography padding={1} fontSize={14} data-testid="customer-name">
           {name}
         </Typography>
       </IconButton>

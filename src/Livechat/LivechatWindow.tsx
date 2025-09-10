@@ -40,6 +40,7 @@ interface LiveChatWindowProps {
   thread: Thread | LivechatThread;
 }
 
+/* prettier-ignore */
 enum LivechatStatus {
   NEW = 'new',
   OPEN = 'open',
@@ -242,6 +243,7 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     }
 
     setLivechatStatus(LivechatStatus.OPEN);
+    setDisabled(false);
   }, []);
 
   const handleSendMessage = useCallback(

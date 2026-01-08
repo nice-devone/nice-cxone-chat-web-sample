@@ -30,7 +30,7 @@ export const Login: FC<LoginProps> = ({ onLogin }) => {
     );
 
     window.location.href = `${providerUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&grant_type=authorization_code&response_type=code`;
-  }, []);
+  }, [providerUrl]);
 
   return (
     <div className="login-dialog">

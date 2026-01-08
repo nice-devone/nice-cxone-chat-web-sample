@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Login } from './Login/Login';
 import { STORAGE_CHAT_AUTHORIZATION_CODE } from '../constants';
 import ChatSdk, {
+  CacheStorage,
   ChatSDKOptions,
   SecureSessions,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
@@ -23,7 +24,8 @@ const chatSdkOptions: ChatSDKOptions = {
       : undefined,
   isLivechat: true,
   securedSession: SecureSessions.THIRD_PARTY,
-  cacheStorage: null,
+  cacheStorage: new CacheStorage(localStorage),
+  storage: localStorage,
   onError: (error) => {
     console.error('Chat SDK error:', error);
   },

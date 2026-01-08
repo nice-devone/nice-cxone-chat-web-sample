@@ -17,10 +17,7 @@ export const MessagesBoard: FC<MessagesBoardProps> = ({
   loadMoreMessages,
   onPostback,
 }) => {
-  const messageArray = useMemo(
-    () => Array.from(messages.values()),
-    [messages.size],
-  );
+  const messageArray = useMemo(() => Array.from(messages.values()), [messages]);
 
   return (
     <div className="messages-board">

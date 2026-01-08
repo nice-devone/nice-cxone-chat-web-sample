@@ -34,7 +34,7 @@ export const SendMessageForm: FC<SendMessageFormProps> = ({
     if (textFieldRef.current) {
       textFieldRef.current.value = '';
     }
-  }, [disabled]);
+  }, [disabled, onSubmit]);
 
   const handleKeyUp = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {

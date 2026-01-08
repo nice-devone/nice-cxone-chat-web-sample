@@ -13,14 +13,14 @@ export function EndLivechatButton({
 }: EndLivechatButtonProps): JSX.Element | null {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  if (sdk.isLivechat === false) {
-    return null;
-  }
-
   const onButtonClick = useCallback(async () => {
     setIsLoading(true);
     await handleEndLivechat();
   }, [handleEndLivechat]);
+
+  if (sdk.isLivechat === false) {
+    return null;
+  }
 
   const LoadingIcon = isLoading ? <CircularProgress color="inherit" /> : null;
 

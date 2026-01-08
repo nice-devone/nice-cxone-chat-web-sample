@@ -60,6 +60,18 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     null,
   );
 
+  const handleRecoverThreadStatus = useCallback((status: string) => {
+    if (status === ContactStatus.CLOSED) {
+      setLivechatStatus(LivechatStatus.CLOSED);
+      setDisabled(true);
+
+      return;
+    }
+
+    setLivechatStatus(LivechatStatus.OPEN);
+    setDisabled(false);
+  }, []);
+
   // Recover thread
   useEffect(() => {
     sdk
@@ -94,47 +106,7 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     };
 
     recover();
-  }, [thread]);
-
-  // Attach ChatEvent listeners
-  useEffect(() => {
-    const removeMessageCreatedEventListener = thread.onThreadEvent(
-      ChatEvent.MESSAGE_CREATED,
-      handleMessageAdded,
-    );
-    const removeContactStatusChangedListener = sdk.onChatEvent(
-      ChatEvent.CONTACT_STATUS_CHANGED,
-      handleCloseLivechatThread,
-    );
-    const removeAssignedAgentChangedListener = sdk.onChatEvent(
-      ChatEvent.ASSIGNED_AGENT_CHANGED,
-      handleAssignedAgentChangeEvent,
-    );
-
-    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
-      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
-      handleRoutingQueueAssignmentChangedEvent,
-    );
-
-    const removeAgentTypingStartedListener = sdk.onChatEvent(
-      ChatEvent.AGENT_TYPING_STARTED,
-      handleAgentTypingStartedEvent,
-    );
-
-    const removeAgentTypingEndedListener = sdk.onChatEvent(
-      ChatEvent.AGENT_TYPING_ENDED,
-      handleAgentTypingEndedEvent,
-    );
-
-    return () => {
-      removeMessageCreatedEventListener();
-      removeContactStatusChangedListener();
-      removeAssignedAgentChangedListener();
-      removeRoutingQueueAssignmentChangedListener();
-      removeAgentTypingStartedListener();
-      removeAgentTypingEndedListener();
-    };
-  }, []);
+  }, [handleRecoverThreadStatus, sdk, thread]);
 
   // Mark all messages as read on focus
   useEffect(() => {
@@ -225,26 +197,63 @@ export const LivechatWindow: FC<LiveChatWindowProps> = ({ sdk, thread }) => {
     [],
   );
 
+  // Attach ChatEvent listeners
+  useEffect(() => {
+    const removeMessageCreatedEventListener = thread.onThreadEvent(
+      ChatEvent.MESSAGE_CREATED,
+      handleMessageAdded,
+    );
+    const removeContactStatusChangedListener = sdk.onChatEvent(
+      ChatEvent.CONTACT_STATUS_CHANGED,
+      handleCloseLivechatThread,
+    );
+    const removeAssignedAgentChangedListener = sdk.onChatEvent(
+      ChatEvent.ASSIGNED_AGENT_CHANGED,
+      handleAssignedAgentChangeEvent,
+    );
+
+    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
+      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
+      handleRoutingQueueAssignmentChangedEvent,
+    );
+
+    const removeAgentTypingStartedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_STARTED,
+      handleAgentTypingStartedEvent,
+    );
+
+    const removeAgentTypingEndedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_ENDED,
+      handleAgentTypingEndedEvent,
+    );
+
+    return () => {
+      removeMessageCreatedEventListener();
+      removeContactStatusChangedListener();
+      removeAssignedAgentChangedListener();
+      removeRoutingQueueAssignmentChangedListener();
+      removeAgentTypingStartedListener();
+      removeAgentTypingEndedListener();
+    };
+  }, [
+    handleAgentTypingEndedEvent,
+    handleAgentTypingStartedEvent,
+    handleAssignedAgentChangeEvent,
+    handleCloseLivechatThread,
+    handleMessageAdded,
+    handleRoutingQueueAssignmentChangedEvent,
+    sdk,
+    thread,
+  ]);
+
   const handleInputCustomerNameChanged = useCallback(
     (newCustomerName: string) => {
       localStorage.setItem(STORAGE_CHAT_CUSTOMER_NAME, newCustomerName);
       setCustomerName(newCustomerName);
       sdk.getCustomer()?.setName(newCustomerName);
     },
-    [],
+    [sdk],
   );
-
-  const handleRecoverThreadStatus = useCallback((status: string) => {
-    if (status === ContactStatus.CLOSED) {
-      setLivechatStatus(LivechatStatus.CLOSED);
-      setDisabled(true);
-
-      return;
-    }
-
-    setLivechatStatus(LivechatStatus.OPEN);
-    setDisabled(false);
-  }, []);
 
   const handleSendMessage = useCallback(
     (messageText: string) => {

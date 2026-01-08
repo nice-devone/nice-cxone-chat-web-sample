@@ -1,5 +1,11 @@
 import { CSSProperties, FC } from 'react';
-import { Message, MessageType } from '@nice-devone/nice-cxone-chat-web-sdk';
+import {
+  ListPickerMessagePayload,
+  Message,
+  MessageType,
+  QuickRepliesMessagePayload,
+  RichLinkMessagePayload,
+} from '@nice-devone/nice-cxone-chat-web-sdk';
 import { AdaptiveCard } from 'adaptivecards-react';
 import { QuickReplies } from './QuickReplies.tsx';
 import { ListPicker } from './ListPicker.tsx';
@@ -41,7 +47,7 @@ export const MessageRichContent: FC<MessageRichContentProps> = ({
     case MessageType.QUICK_REPLIES:
       return (
         <QuickReplies
-          payload={payload}
+          payload={payload as QuickRepliesMessagePayload}
           onAction={onAction}
           hostConfig={adaptiveCardsHostConfig}
         />
@@ -49,7 +55,7 @@ export const MessageRichContent: FC<MessageRichContentProps> = ({
     case MessageType.RICH_LINK:
       return (
         <RichLink
-          payload={payload}
+          payload={payload as RichLinkMessagePayload}
           hostConfig={adaptiveCardsHostConfig}
           style={adaptiveCardsStyle}
         />
@@ -57,7 +63,7 @@ export const MessageRichContent: FC<MessageRichContentProps> = ({
     case MessageType.LIST_PICKER:
       return (
         <ListPicker
-          payload={payload}
+          payload={payload as ListPickerMessagePayload}
           onAction={onAction}
           hostConfig={adaptiveCardsHostConfig}
           style={adaptiveCardsStyle}

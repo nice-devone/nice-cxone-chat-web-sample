@@ -14,7 +14,7 @@ function getAgentName(
 
   const { nickname, firstName, surname } = assigneeData;
 
-  if (nickname !== null && nickname !== '') {
+  if (typeof nickname === 'string' && nickname !== '') {
     return nickname;
   }
 

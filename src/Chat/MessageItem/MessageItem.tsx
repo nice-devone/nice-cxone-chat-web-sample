@@ -8,6 +8,7 @@ import {
   MessageRichContent,
   Postback,
 } from '../MessageRichContent/MessageRichContent.tsx';
+import { resolveChatMessageText } from '../utils/resolveChatMessageText.ts';
 
 interface MessageItemProps {
   message: Message;
@@ -34,7 +35,7 @@ export const MessageItem: FC<MessageItemProps> = ({ message, onAction }) => {
         />
         <CardContent>
           <MessageAttachments attachments={message.attachments} />
-          <MessageText text={message.messageContent.payload.text} />
+          <MessageText text={resolveChatMessageText(message)} />
           <MessageRichContent message={message} onAction={onAction} />
         </CardContent>
         <CardHeader

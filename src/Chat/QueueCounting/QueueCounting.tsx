@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert';
 import {
   ChatSdk,
   ChatEvent,
@@ -23,7 +24,7 @@ export function QueueCounting({ sdk }: QueueCountingProps): JSX.Element | null {
     );
 
     return removeListenerCallback;
-  }, [setQueuePosition]);
+  }, [sdk]);
 
   if (queuePosition === 0) {
     return null;
@@ -34,9 +35,10 @@ export function QueueCounting({ sdk }: QueueCountingProps): JSX.Element | null {
   }
 
   return (
-    <div data-testid="queue-counting">
-      {`All our agents dedicated to your queue are currently busy.
-      There are ${queuePosition} people ahead of you in the queue.`}
-    </div>
+    <Alert
+      severity="info"
+      data-testid="queue-counting"
+    >{`All our agents dedicated to your queue are currently busy.
+      There are ${queuePosition} people ahead of you in the queue.`}</Alert>
   );
 }

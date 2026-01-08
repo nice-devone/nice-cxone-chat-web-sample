@@ -6,7 +6,7 @@ import {
   ChatSDKOptions,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import '../Chat/Chat.css';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import BackIcon from '@mui/icons-material/ArrowBack';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ThreadList } from './ThreadList';
@@ -34,6 +34,7 @@ const chatSdkOptions: ChatSDKOptions = {
   isLivechat: true,
   securedSession: SecureSessions.ANONYMOUS,
   cacheStorage: null,
+  storage: null,
   onError: (error) => {
     console.error('Chat SDK error:', error);
   },
@@ -46,7 +47,7 @@ export const MultiThreadMessenger: FC = () => {
   const sdkRef = useRef<ChatSdk>(new ChatSdk(chatSdkOptions));
   const sdk = sdkRef.current;
 
-  const handleLoadThreadList = () => {
+  const handleLoadThreadList = useCallback(() => {
     const loadThreadList = async () => {
       try {
         sdk.connect();
@@ -57,7 +58,12 @@ export const MultiThreadMessenger: FC = () => {
       }
     };
     loadThreadList();
-  };
+  }, [sdk]);
+
+  // try to load saved customer id and thread id
+  useEffect(() => {
+    handleLoadThreadList();
+  }, [handleLoadThreadList]);
 
   const handleThreadSelect = (idOnExternalPlatform: string) => {
     localStorage.setItem(
@@ -110,11 +116,6 @@ export const MultiThreadMessenger: FC = () => {
       }
     }
   };
-
-  // try to load saved customer id and thread id
-  useEffect(() => {
-    handleLoadThreadList();
-  }, []);
 
   if (!threadList) {
     return (

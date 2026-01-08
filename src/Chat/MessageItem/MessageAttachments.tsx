@@ -24,7 +24,11 @@ export const MessageAttachments: FC<MessageAttachmentsProps> = ({
     <ImageList cols={attachmentImages.length}>
       {attachmentImages.map((item: Attachment) => (
         <ImageListItem key={item.id}>
-          <img src={item.previewUrl} alt={item.friendlyName} loading="lazy" />
+          <img
+            src={item.previewUrl || item.url}
+            alt={item.friendlyName}
+            loading="lazy"
+          />
         </ImageListItem>
       ))}
     </ImageList>

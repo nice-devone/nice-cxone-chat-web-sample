@@ -6,6 +6,7 @@ import {
   isMessageCreatedEvent,
 } from '@nice-devone/nice-cxone-chat-web-sdk';
 import { useCallback, useEffect, useState } from 'react';
+import { resolveChatMessageText } from '../Chat/utils/resolveChatMessageText';
 
 interface MessagesProps {
   sdk: ChatSdk;
@@ -19,6 +20,15 @@ interface Message {
   };
 }
 
+const transformMessage = (message: ChatMessage): Message => {
+  return {
+    id: message.id,
+    messageContent: {
+      text: resolveChatMessageText(message),
+    },
+  };
+};
+
 export const Messages = ({ sdk, threadId }: MessagesProps): JSX.Element => {
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -30,12 +40,9 @@ export const Messages = ({ sdk, threadId }: MessagesProps): JSX.Element => {
       const recoveredMessages = recoverResponse.messages;
 
       setMessages(() => {
-        return recoveredMessages.map((message: ChatMessage) => ({
-          id: message.id,
-          messageContent: {
-            text: message.messageContent.text,
-          },
-        }));
+        return recoveredMessages.map((message: ChatMessage) =>
+          transformMessage(message),
+        );
       });
     } catch (error) {
       console.error(error);
@@ -51,7 +58,7 @@ export const Messages = ({ sdk, threadId }: MessagesProps): JSX.Element => {
       const message = event.detail.data.message;
 
       setMessages((storedMessages) => {
-        return [...storedMessages, message];
+        return [...storedMessages, transformMessage(message)];
       });
     },
     [],

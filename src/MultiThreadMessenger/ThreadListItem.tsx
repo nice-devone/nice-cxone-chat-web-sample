@@ -1,5 +1,8 @@
 import { ComponentType, SyntheticEvent, useEffect, useState } from 'react';
-import { LoadThreadMetadataChatEvent } from '@nice-devone/nice-cxone-chat-web-sdk';
+import {
+  LoadThreadMetadataChatEvent,
+  MessageTextContent,
+} from '@nice-devone/nice-cxone-chat-web-sdk';
 import { IconButton, ListItemText } from '@mui/material';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -42,7 +45,10 @@ export function ThreadListItem({
             response !== null &&
             response.data.lastMessage.messageContent.type === 'TEXT'
           ) {
-            setLastMessage(response.data.lastMessage.messageContent.text);
+            setLastMessage(
+              (response.data.lastMessage.messageContent as MessageTextContent)
+                .payload.text ?? null,
+            );
           }
         }
       } catch (error: unknown) {
@@ -51,7 +57,7 @@ export function ThreadListItem({
     };
 
     getMetadata();
-  }, []);
+  }, [getThreadMetadata, id]);
 
   const handleEdit = () => {
     if (onEdit) {

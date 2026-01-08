@@ -64,41 +64,6 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
     recover();
   }, [sdk, thread]);
 
-  // Attach ChatEvent listeners
-  useEffect(() => {
-    const removeMessageCreatedEventListener = thread.onThreadEvent(
-      ChatEvent.MESSAGE_CREATED,
-      handleMessageAdded,
-    );
-    const removeAssignedAgentChangedListener = sdk.onChatEvent(
-      ChatEvent.ASSIGNED_AGENT_CHANGED,
-      handleAssignedAgentChangeEvent,
-    );
-
-    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
-      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
-      handleRoutingQueueAssignmentChangedEvent,
-    );
-
-    const removeAgentTypingStartedListener = sdk.onChatEvent(
-      ChatEvent.AGENT_TYPING_STARTED,
-      handleAgentTypingStartedEvent,
-    );
-
-    const removeAgentTypingEndedListener = sdk.onChatEvent(
-      ChatEvent.AGENT_TYPING_ENDED,
-      handleAgentTypingEndedEvent,
-    );
-
-    return () => {
-      removeMessageCreatedEventListener();
-      removeAssignedAgentChangedListener();
-      removeRoutingQueueAssignmentChangedListener();
-      removeAgentTypingStartedListener();
-      removeAgentTypingEndedListener();
-    };
-  }, []);
-
   // Mark all messages as read on focus
   useEffect(() => {
     if (windowFocus && messages.size > 0) {
@@ -171,13 +136,56 @@ export const ChatWindow: FC<ChatWindowProps> = ({ sdk, thread }) => {
     [],
   );
 
+  // Attach ChatEvent listeners
+  useEffect(() => {
+    const removeMessageCreatedEventListener = thread.onThreadEvent(
+      ChatEvent.MESSAGE_CREATED,
+      handleMessageAdded,
+    );
+    const removeAssignedAgentChangedListener = sdk.onChatEvent(
+      ChatEvent.ASSIGNED_AGENT_CHANGED,
+      handleAssignedAgentChangeEvent,
+    );
+
+    const removeRoutingQueueAssignmentChangedListener = sdk.onChatEvent(
+      ChatEvent.CONTACT_TO_ROUTING_QUEUE_ASSIGNMENT_CHANGED,
+      handleRoutingQueueAssignmentChangedEvent,
+    );
+
+    const removeAgentTypingStartedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_STARTED,
+      handleAgentTypingStartedEvent,
+    );
+
+    const removeAgentTypingEndedListener = sdk.onChatEvent(
+      ChatEvent.AGENT_TYPING_ENDED,
+      handleAgentTypingEndedEvent,
+    );
+
+    return () => {
+      removeMessageCreatedEventListener();
+      removeAssignedAgentChangedListener();
+      removeRoutingQueueAssignmentChangedListener();
+      removeAgentTypingStartedListener();
+      removeAgentTypingEndedListener();
+    };
+  }, [
+    handleAgentTypingEndedEvent,
+    handleAgentTypingStartedEvent,
+    handleAssignedAgentChangeEvent,
+    handleMessageAdded,
+    handleRoutingQueueAssignmentChangedEvent,
+    sdk,
+    thread,
+  ]);
+
   const handleInputCustomerNameChanged = useCallback(
     (newCustomerName: string) => {
       localStorage.setItem(STORAGE_CHAT_CUSTOMER_NAME, newCustomerName);
       setCustomerName(newCustomerName);
       sdk.getCustomer()?.setName(newCustomerName);
     },
-    [],
+    [sdk],
   );
 
   const handleSendMessage = useCallback(
